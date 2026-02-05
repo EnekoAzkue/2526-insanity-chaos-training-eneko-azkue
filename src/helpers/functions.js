@@ -104,7 +104,7 @@ const createRound = (roundData, warriors) => {
           warrior: warrior
         }
 
-        return [trainingState]
+        return trainingState
       } else {
         console.log(`${warrior.name} has not enough durability on the weapon and cannot train.`)
       }
