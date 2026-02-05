@@ -2,7 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cron = require('node-cron');
-// const mongodbRoute = "mongodb+srv://enekoazkue:passwd@cluster0.hjijrfb.mongodb.net/Quest?retryWrites=true&w=majority&appName=Cluster0"
+const trainingService = require('./service/trainingService');
+const helpers = require('./helpers/functions')
 const mongodbRoute = "mongodb+srv://enekoazkue:enekoazkue@cluster0.0itplxv.mongodb.net/insanity"
 
 const trainingRouter = require('./router/trainingRoutes');
@@ -18,21 +19,39 @@ async function start() {
   try {
     await mongoose.connect(mongodbRoute);
     app.listen(PORT, () => {
-      console.log(`API is listening on port ${PORT}`)
     });
-    console.log('Conexion con mongo correcta.')
   }
   catch (error) {
     console.log(`Error al conectar a la base de datos: ${error.message}`)
   }
 
-  // cron.schedule('* * * * * *', () => {
-  //   console.log('running a task every s');
-  // });
+  helpers.initialMessage()
+  const warriorsAfterEquip = helpers.asignWeapons()
+  
+  let roundData = {
+    roundNum: 1,
+    month: "Frostmarch",
+    day: 30,
+    hour: 13,
+  }
 
-  // cron.schedule('*/5 * * * * *', () => {
-  //   console.log('running a task every 5s');
-  // });
+  let trainingState = {
+    epicDate: '',
+    warriors: []
+  }
+  const round = cron.schedule('*/4 * * * * *', () => {
+    trainingState = helpers.createRound(roundData, warriorsAfterEquip)
+    
+  });
+
+  cron.schedule('*/30 * * * * *', () => {
+    if(trainingState) {
+      console.log('Training state saved in DB at', trainingState.epicDate);
+      trainingService.createTraining(trainingState)
+    }
+  });
+
+  
 }
 
 start()
